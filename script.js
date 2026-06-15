@@ -1,9 +1,9 @@
 // Глобальные переменные
 let calendar;
 let workers = [];
-const COMMON_CALENDAR_EMAIL = "museum@wolfenbuettel.de"; // ✅ ЗАМЕНИ НА СВОЙ ОБЩИЙ КАЛЕНДАРЬ!
-const GITHUB_USERNAME = "AusstellungMW";         // ✅ ЗАМЕНИ НА СВОЁ ИМЯ НА GITHUB!
-const REPO_NAME = "work-schedule";                      // ✅ ЗАМЕНИ НА НАЗВАНИЕ РЕПОЗИТОРИЯ!
+const COMMON_CALENDAR_EMAIL = "museum@wolfenbuettel.de"; // ✅ Твой общий календарь
+const GITHUB_USERNAME = "AusstellungMW";                 // ✅ Твоё имя на GitHub
+const REPO_NAME = "work-schedule";                      // ✅ Название репозитория
 
 // Инициализация календаря
 function initCalendar() {
@@ -93,7 +93,7 @@ function deleteWorker(index) {
   }
 }
 
-// Открываем событие в Outlook (Direct Link)
+// Открываем событие в Outlook (для Exchange Server)
 function openInOutlook(index) {
   const worker = workers[index];
   const subject = encodeURIComponent(`${worker.name} - ${worker.status}`);
@@ -101,7 +101,8 @@ function openInOutlook(index) {
   const end = `${worker.date}T17:00:00`;
   const body = encodeURIComponent(`Сотрудник: ${worker.name}\nСтатус: ${worker.status}`);
 
-  const url = `https://outlook.office.com/calendar/0/action/compose?path=/calendar/${COMMON_CALENDAR_EMAIL}&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
+  // ✅ URL для твоего Exchange Server (mail.wolfenbuettel.de)
+  const url = `https://mail.wolfenbuettel.de/owa/?cmd=new&module=calendar&path=/calendar/${COMMON_CALENDAR_EMAIL}&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
   window.open(url, '_blank');
 }
 
