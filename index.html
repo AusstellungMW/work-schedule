@@ -1,79 +1,254 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Планирование работников</title>
+  <title>Mitarbeiterplanung</title>
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FullCalendar CSS -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <!-- Font Awesome для иконок -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { background-color: #f8f9fa; }
-    .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-    #calendar { max-height: 500px; }
-    .badge-work { background-color: #28a745; }
-    .badge-sick { background-color: #dc3545; }
-    .badge-vacation { background-color: #ffc107; }
+    :root {
+      --primary-color: #0d6efd;
+      --success-color: #198754;
+      --danger-color: #dc3545;
+      --warning-color: #ffc107;
+      --light-bg: #f8f9fa;
+      --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+      background-color: var(--light-bg);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 12px 12px 0 0 !important;
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+    }
+
+    #calendar {
+      max-height: 550px;
+      border-radius: 8px;
+    }
+
+    .fc-today {
+      background-color: rgba(13, 110, 253, 0.1) !important;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .badge-work {
+      background-color: var(--success-color);
+    }
+
+    .badge-sick {
+      background-color: var(--danger-color);
+    }
+
+    .badge-vacation {
+      background-color: var(--warning-color);
+      color: #000;
+    }
+
+    .btn {
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+      background-color: #0b5ed7;
+      border-color: #0a58ca;
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      border-color: var(--success-color);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      border-color: var(--danger-color);
+    }
+
+    .modal-content {
+      border-radius: 12px;
+      border: none;
+    }
+
+    .modal-header {
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .form-control, .form-select {
+      border-radius: 8px;
+      padding: 10px 15px;
+      border: 1px solid #ced4da;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+
+    .table {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .table th {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+    }
+
+    .logout-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    h1 {
+      color: #2c3e50;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .page-header {
+      background: linear-gradient(135deg, var(--primary-color), #1971c2);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      box-shadow: var(--card-shadow);
+    }
+
+    .page-header h1 {
+      color: white;
+      margin: 0;
+    }
+
+    .page-header p {
+      opacity: 0.9;
+      margin: 0.5rem 0 0;
+    }
   </style>
 </head>
 <body>
-  <div class="container mt-4">
-    <h1 class="text-center mb-4">📅 Планирование работников</h1>
+  <!-- Шапка страницы -->
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12">
+        <div class="page-header">
+          <h1><i class="fas fa-calendar-alt me-3"></i>Mitarbeiterplanung</h1>
+          <p>Planen Sie die Arbeitszeiten Ihrer Mitarbeiter einfach und bequem</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Форма добавления -->
+  <div class="container py-4">
+    <!-- Блок добавления записи -->
     <div class="row mb-4">
       <div class="col-md-6 mx-auto">
         <div class="card">
+          <div class="card-header">
+            <i class="fas fa-user-plus me-2"></i>Neuen Eintrag hinzufügen
+          </div>
           <div class="card-body">
-            <h5 class="card-title">Добавить запись</h5>
-            <div class="mb-3">
-              <label class="form-label">Имя и фамилия</label>
-              <input type="text" class="form-control" id="workerName" placeholder="Иван Иванов" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Дата</label>
-              <input type="date" class="form-control" id="workerDate" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Статус</label>
-              <select class="form-select" id="workerStatus">
-                <option value="Работает">✅ Работает</option>
-                <option value="Болен">🤒 Болен</option>
-                <option value="Отпуск">🏖 Отпуск</option>
-              </select>
-            </div>
-            <button class="btn btn-primary me-2" onclick="addWorker()">Добавить</button>
-            <button class="btn btn-success" onclick="saveToGitHub()">💾 Сохранить в GitHub</button>
+            <form id="workerForm">
+              <div class="mb-3">
+                <label for="workerName" class="form-label">Name und Nachname</label>
+                <input type="text" class="form-control" id="workerName" placeholder="Max Mustermann" required>
+              </div>
+              <div class="mb-3">
+                <label for="workerDate" class="form-label">Datum</label>
+                <input type="date" class="form-control" id="workerDate" required>
+              </div>
+              <div class="mb-3">
+                <label for="workerStatus" class="form-label">Status</label>
+                <select class="form-select" id="workerStatus">
+                  <option value="Arbeitet">✅ Arbeitet</option>
+                  <option value="Krank">🤒 Krank</option>
+                  <option value="Urlaub">🏖 Urlaub</option>
+                </select>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary flex-grow-1" onclick="addWorker()">
+                  <i class="fas fa-plus me-1"></i> Hinzufügen
+                </button>
+                <button type="button" class="btn btn-success flex-grow-1" onclick="saveToGitHub()">
+                  <i class="fas fa-save me-1"></i> In GitHub speichern
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Календарь -->
+    <!-- Блок календаря -->
     <div class="row mb-4">
       <div class="col-md-10 mx-auto">
         <div class="card">
+          <div class="card-header">
+            <i class="fas fa-calendar-week me-2"></i>Kalender
+          </div>
           <div class="card-body">
-            <h5 class="card-title">Календарь</h5>
             <div id="calendar"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Таблица записей -->
-    <div class="row">
+    <!-- Блок таблицы записей -->
+    <div class="row mb-4">
       <div class="col-md-10 mx-auto">
         <div class="card">
+          <div class="card-header">
+            <i class="fas fa-list me-2"></i>Eintragsliste
+          </div>
           <div class="card-body">
-            <h5 class="card-title">Список записей</h5>
             <div class="table-responsive">
-              <table class="table table-striped">
+              <table class="table table-hover">
                 <thead>
                   <tr>
-                    <th>Имя</th>
-                    <th>Дата</th>
-                    <th>Статус</th>
-                    <th>Действия</th>
+                    <th>Name</th>
+                    <th>Datum</th>
+                    <th>Status</th>
+                    <th>Aktionen</th>
                   </tr>
                 </thead>
                 <tbody id="workersList"></tbody>
@@ -83,28 +258,78 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Модальное окно для GitHub Token -->
-    <div class="modal fade" id="tokenModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Введите GitHub Token</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <!-- Модальное окно для авторизации в Outlook -->
+  <div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-lock me-2"></i>Anmeldung erforderlich</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Bitte geben Sie Ihre Outlook-Anmeldedaten ein, um auf den Kalender zuzugreifen:</p>
+          <div class="mb-3">
+            <label for="outlookUsername" class="form-label">E-Mail</label>
+            <input type="email" class="form-control" id="outlookUsername" placeholder="name@firma.de" required>
           </div>
-          <div class="modal-body">
-            <p>Вставьте ваш Personal Access Token (PAT) для сохранения данных:</p>
-            <input type="password" class="form-control" id="githubToken">
+          <div class="mb-3">
+            <label for="outlookPassword" class="form-label">Passwort</label>
+            <input type="password" class="form-control" id="outlookPassword" required>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-            <button type="button" class="btn btn-primary" onclick="saveToken()">Сохранить токен</button>
+          <div class="form-text">
+            <i class="fas fa-info-circle me-1"></i> Ihre Daten werden nur für diese Sitzung gespeichert und nach dem Schließen des Browsers gelöscht.
           </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i> Abbrechen
+          </button>
+          <button type="button" class="btn btn-primary" onclick="saveAuth()">
+            <i class="fas fa-sign-in-alt me-1"></i> Anmelden
+          </button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Модальное окно для GitHub Token -->
+  <div class="modal fade" id="tokenModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-key me-2"></i>GitHub Token</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Geben Sie Ihren GitHub Personal Access Token ein, um Daten zu speichern:</p>
+          <div class="mb-3">
+            <label for="githubToken" class="form-label">Token</label>
+            <input type="password" class="form-control" id="githubToken" placeholder="ghp_..." required>
+          </div>
+          <div class="form-text">
+            <i class="fas fa-info-circle me-1"></i> Der Token benötigt nur das <code>repo</code>-Recht.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i> Abbrechen
+          </button>
+          <button type="button" class="btn btn-primary" onclick="saveToken()">
+            <i class="fas fa-save me-1"></i> Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кнопка выхода (в правом нижнем углу) -->
+  <button class="btn btn-danger logout-btn" onclick="logout()">
+    <i class="fas fa-sign-out-alt me-1"></i> Abmelden
+  </button>
+
+  <!-- Подключаем библиотеки -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
   <script src="script.js"></script>
