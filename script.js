@@ -1,9 +1,14 @@
 // Глобальные переменные
 let calendar;
 let workers = [];
-const COMMON_CALENDAR_EMAIL = "Museum@Wolfenbuettel.de"; // ✅ С заглавной M!
+const COMMON_CALENDAR_EMAIL = "Museum@Wolfenbuettel.de";
 const GITHUB_USERNAME = "AusstellungMW";
 const REPO_NAME = "work-schedule";
+
+// Проверяем, авторизован ли пользователь (есть ли логин/пароль в sessionStorage)
+function isAuthenticated() {
+  return sessionStorage.getItem('outlookUsername') && sessionStorage.getItem('outlookPassword');
+}
 
 // Инициализация календаря
 function initCalendar() {
@@ -92,27 +97,66 @@ function deleteWorker(index) {
   }
 }
 
-// Открываем событие в Outlook (для твоего Exchange Server)
+// Открываем событие в Outlook
 function openInOutlook(index) {
+  // Проверяем, авторизован ли пользователь
+  if (!isAuthenticated()) {
+    showAuthModal();
+    return;
+  }
+
   const worker = workers[index];
   const subject = encodeURIComponent(`${worker.name} - ${worker.status}`);
   const start = `${worker.date}T09:00:00`;
   const end = `${worker.date}T17:00:00`;
   const body = encodeURIComponent(`Сотрудник: ${worker.name}\nСтатус: ${worker.status}`);
 
-  // ✅ ПРАВИЛЬНЫЙ URL для твоего Exchange Server
-  const url = `https://mail.wolfenbuettel.de/owa/Museum@Wolfenbuettel.de/?cmd=new&module=calendar&path=/calendar/view/WorkWeek&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
+  // Формируем URL с учетными данными (ВНИМАНИЕ: это небезопасно для публичных сайтов!)
+  const username = encodeURIComponent(sessionStorage.getItem('outlookUsername'));
+  const password = encodeURIComponent(sessionStorage.getItem('outlookPassword'));
+  const url = `https://${username}:${password}@mail.wolfenbuettel.de/owa/Museum@Wolfenbuettel.de/?cmd=new&module=calendar&path=/calendar/view/WorkWeek&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
   window.open(url, '_blank');
 }
 
-// Сохраняем токен в localStorage
+// Показываем модальное окно для ввода логина/пароля
+function showAuthModal() {
+  const modal = new bootstrap.Modal(document.getElementById('authModal'));
+  modal.show();
+}
+
+// Сохраняем учетные данные в sessionStorage
+function saveAuth() {
+  const username = document.getElementById('outlookUsername').value;
+  const password = document.getElementById('outlookPassword').value;
+
+  if (!username || !password) {
+    alert('Введи логин и пароль!');
+    return;
+  }
+
+  sessionStorage.setItem('outlookUsername', username);
+  sessionStorage.setItem('outlookPassword', password);
+
+  const modal = bootstrap.Modal.getInstance(document.getElementById('authModal'));
+  modal.hide();
+  alert('✅ Авторизация успешна! Теперь можно работать.');
+}
+
+// Выход из системы (очистка sessionStorage)
+function logout() {
+  sessionStorage.removeItem('outlookUsername');
+  sessionStorage.removeItem('outlookPassword');
+  alert('Вы вышли из системы.');
+}
+
+// Сохраняем токен GitHub
 function saveToken() {
   const token = document.getElementById('githubToken').value;
   if (token) {
     localStorage.setItem('githubToken', token);
     const modal = bootstrap.Modal.getInstance(document.getElementById('tokenModal'));
     modal.hide();
-    alert('Токен сохранён! Теперь можно сохранять данные в GitHub.');
+    alert('Токен GitHub сохранён!');
   } else {
     alert('Введи токен!');
   }
@@ -181,7 +225,11 @@ async function loadData() {
   }
 }
 
-// Загружаем данные при загрузке страницы
+// Проверяем авторизацию при загрузке страницы
 window.onload = function() {
   loadData();
+  // Если не авторизован, показываем модальное окно
+  if (!isAuthenticated()) {
+    showAuthModal();
+  }
 };
