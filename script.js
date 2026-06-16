@@ -1,9 +1,9 @@
 // Глобальные переменные
 let calendar;
 let workers = [];
-const COMMON_CALENDAR_EMAIL = "museum@wolfenbuettel.de"; // ✅ Твой общий календарь
-const GITHUB_USERNAME = "AusstellungMW";                 // ✅ Твоё имя на GitHub
-const REPO_NAME = "work-schedule";                      // ✅ Название репозитория
+const COMMON_CALENDAR_EMAIL = "Museum@Wolfenbuettel.de"; // ✅ С заглавной M!
+const GITHUB_USERNAME = "AusstellungMW";
+const REPO_NAME = "work-schedule";
 
 // Инициализация календаря
 function initCalendar() {
@@ -79,7 +79,6 @@ function addWorker() {
   initCalendar();
   updateWorkersList();
 
-  // Очищаем форму
   document.getElementById('workerName').value = '';
   document.getElementById('workerDate').value = '';
 }
@@ -93,7 +92,7 @@ function deleteWorker(index) {
   }
 }
 
-// Открываем событие в Outlook (для Exchange Server)
+// Открываем событие в Outlook (для твоего Exchange Server)
 function openInOutlook(index) {
   const worker = workers[index];
   const subject = encodeURIComponent(`${worker.name} - ${worker.status}`);
@@ -101,8 +100,8 @@ function openInOutlook(index) {
   const end = `${worker.date}T17:00:00`;
   const body = encodeURIComponent(`Сотрудник: ${worker.name}\nСтатус: ${worker.status}`);
 
-  // ✅ URL для твоего Exchange Server (mail.wolfenbuettel.de)
-  const url = `https://mail.wolfenbuettel.de/owa/?cmd=new&module=calendar&path=/calendar/${COMMON_CALENDAR_EMAIL}&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
+  // ✅ ПРАВИЛЬНЫЙ URL для твоего Exchange Server
+  const url = `https://mail.wolfenbuettel.de/owa/Museum@Wolfenbuettel.de/?cmd=new&module=calendar&path=/calendar/view/WorkWeek&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
   window.open(url, '_blank');
 }
 
@@ -129,7 +128,6 @@ async function saveToGitHub() {
   }
 
   try {
-    // Получаем текущий файл и его SHA
     const fileResponse = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/schedule.json`, {
       headers: {
         'Authorization': `token ${token}`
@@ -142,10 +140,8 @@ async function saveToGitHub() {
       sha = fileData.sha;
     }
 
-    // Кодируем данные в Base64
     const content = btoa(JSON.stringify(workers, null, 2));
 
-    // Сохраняем в GitHub
     const saveResponse = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/schedule.json`, {
       method: 'PUT',
       headers: {
