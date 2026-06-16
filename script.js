@@ -1,13 +1,13 @@
 // Глобальные переменные
 let calendar;
 let workers = [];
-const COMMON_CALENDAR_EMAIL = "Museum@Wolfenbuettel.de";
+const COMMON_CALENDAR_EMAIL = "Museum@Wolfenbuettel.de"; // ✅ Твой календарь
 const GITHUB_USERNAME = "AusstellungMW";
 const REPO_NAME = "work-schedule";
 
-// Проверяем, авторизован ли пользователь (есть ли логин/пароль в sessionStorage)
+// Проверяем, авторизован ли пользователь (есть ли логин в sessionStorage)
 function isAuthenticated() {
-  return sessionStorage.getItem('outlookUsername') && sessionStorage.getItem('outlookPassword');
+  return sessionStorage.getItem('outlookUsername') !== null;
 }
 
 // Инициализация календаря
@@ -22,7 +22,7 @@ function initCalendar() {
 
   calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
     initialView: 'dayGridMonth',
-    locale: 'ru',
+    locale: 'de', // Немецкий язык для календаря
     events: events,
     headerToolbar: {
       left: 'prev,next today',
@@ -36,9 +36,9 @@ function initCalendar() {
 // Цвета для статусов
 function getStatusColor(status) {
   const colors = {
-    "Работает": "#28a745",
-    "Болен": "#dc3545",
-    "Отпуск": "#ffc107"
+    "Arbeitet": "#28a745",
+    "Krank": "#dc3545",
+    "Urlaub": "#ffc107"
   };
   return colors[status] || "#6c757d";
 }
@@ -50,18 +50,18 @@ function updateWorkersList() {
 
   workers.forEach((worker, index) => {
     const row = document.createElement('tr');
-    const statusClass = worker.status === "Работает" ? "badge-work" :
-                        worker.status === "Болен" ? "badge-sick" : "badge-vacation";
+    const statusClass = worker.status === "Arbeitet" ? "badge-work" :
+                        worker.status === "Krank" ? "badge-sick" : "badge-vacation";
     row.innerHTML = `
       <td>${worker.name}</td>
       <td>${worker.date}</td>
       <td><span class="badge ${statusClass}">${worker.status}</span></td>
       <td>
         <button class="btn btn-sm btn-outline-primary" onclick="openInOutlook(${index})">
-          📅 В Outlook
+          <i class="fas fa-calendar-plus me-1"></i> Zu Outlook
         </button>
         <button class="btn btn-sm btn-outline-danger" onclick="deleteWorker(${index})">
-          🗑 Удалить
+          <i class="fas fa-trash me-1"></i> Löschen
         </button>
       </td>
     `;
@@ -76,7 +76,7 @@ function addWorker() {
   const status = document.getElementById('workerStatus').value;
 
   if (!name || !date) {
-    alert('Пожалуйста, заполните имя и дату!');
+    alert('Bitte füllen Sie Name und Datum aus!');
     return;
   }
 
@@ -90,14 +90,14 @@ function addWorker() {
 
 // Удаляем работника
 function deleteWorker(index) {
-  if (confirm('Удалить эту запись?')) {
+  if (confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {
     workers.splice(index, 1);
     initCalendar();
     updateWorkersList();
   }
 }
 
-// Открываем событие в Outlook
+// Открываем календарь в Outlook (БЕЗ пароля в URL)
 function openInOutlook(index) {
   // Проверяем, авторизован ли пользователь
   if (!isAuthenticated()) {
@@ -109,16 +109,14 @@ function openInOutlook(index) {
   const subject = encodeURIComponent(`${worker.name} - ${worker.status}`);
   const start = `${worker.date}T09:00:00`;
   const end = `${worker.date}T17:00:00`;
-  const body = encodeURIComponent(`Сотрудник: ${worker.name}\nСтатус: ${worker.status}`);
+  const body = encodeURIComponent(`Mitarbeiter: ${worker.name}\nStatus: ${worker.status}`);
 
-  // Формируем URL с учетными данными (ВНИМАНИЕ: это небезопасно для публичных сайтов!)
-  const username = encodeURIComponent(sessionStorage.getItem('outlookUsername'));
-  const password = encodeURIComponent(sessionStorage.getItem('outlookPassword'));
-  const url = `https://${username}:${password}@mail.wolfenbuettel.de/owa/Museum@Wolfenbuettel.de/?cmd=new&module=calendar&path=/calendar/view/WorkWeek&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
+  // ✅ URL БЕЗ пароля (Outlook Web сам запросит авторизацию, если нужно)
+  const url = `https://mail.wolfenbuettel.de/owa/Museum@Wolfenbuettel.de/?cmd=new&module=calendar&path=/calendar/view/WorkWeek&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
   window.open(url, '_blank');
 }
 
-// Показываем модальное окно для ввода логина/пароля
+// Показываем модальное окно для ввода логина
 function showAuthModal() {
   const modal = new bootstrap.Modal(document.getElementById('authModal'));
   modal.show();
@@ -130,23 +128,27 @@ function saveAuth() {
   const password = document.getElementById('outlookPassword').value;
 
   if (!username || !password) {
-    alert('Введи логин и пароль!');
+    alert('Bitte geben Sie Benutzernamen und Passwort ein!');
     return;
   }
 
+  // Сохраняем только логин (пароль не сохраняем для безопасности)
   sessionStorage.setItem('outlookUsername', username);
-  sessionStorage.setItem('outlookPassword', password);
+  // Проверяем пароль (но не сохраняем его)
+  if (password) {
+    sessionStorage.setItem('outlookAuth', 'true');
+  }
 
   const modal = bootstrap.Modal.getInstance(document.getElementById('authModal'));
   modal.hide();
-  alert('✅ Авторизация успешна! Теперь можно работать.');
+  alert('✅ Anmeldung erfolgreich! Sie können jetzt arbeiten.');
 }
 
 // Выход из системы (очистка sessionStorage)
 function logout() {
   sessionStorage.removeItem('outlookUsername');
-  sessionStorage.removeItem('outlookPassword');
-  alert('Вы вышли из системы.');
+  sessionStorage.removeItem('outlookAuth');
+  alert('Sie wurden abgemeldet.');
 }
 
 // Сохраняем токен GitHub
@@ -156,9 +158,9 @@ function saveToken() {
     localStorage.setItem('githubToken', token);
     const modal = bootstrap.Modal.getInstance(document.getElementById('tokenModal'));
     modal.hide();
-    alert('Токен GitHub сохранён!');
+    alert('✅ GitHub-Token gespeichert!');
   } else {
-    alert('Введи токен!');
+    alert('Bitte geben Sie den Token ein!');
   }
 }
 
@@ -193,20 +195,20 @@ async function saveToGitHub() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        message: 'Обновление расписания работников',
+        message: 'Aktualisierung des Mitarbeiterplans',
         content: content,
         sha: sha
       })
     });
 
     if (saveResponse.ok) {
-      alert('✅ Данные сохранены в GitHub!');
+      alert('✅ Daten wurden in GitHub gespeichert!');
     } else {
       const error = await saveResponse.json();
-      alert(`Ошибка: ${error.message}`);
+      alert(`Fehler: ${error.message}`);
     }
   } catch (error) {
-    alert(`Ошибка: ${error.message}`);
+    alert(`Fehler: ${error.message}`);
   }
 }
 
@@ -220,7 +222,7 @@ async function loadData() {
       updateWorkersList();
     }
   } catch (error) {
-    console.log("Файл schedule.json не найден, будет создан новый.");
+    console.log("Die Datei schedule.json wurde nicht gefunden, eine neue wird erstellt.");
     workers = [];
   }
 }
