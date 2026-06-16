@@ -1,14 +1,13 @@
 // Глобальные переменные
 let calendar;
 let workers = [];
-const COMMON_CALENDAR_EMAIL = "Museum@Wolfenbuettel.de";
+const COMMON_CALENDAR_EMAIL = "Museum@Wolfenbuettel.de"; // ✅ Твой календарь
 const GITHUB_USERNAME = "AusstellungMW";
 const REPO_NAME = "work-schedule";
-const EWS_ENDPOINT = "https://mail.wolfenbuettel.de/EWS/Exchange.asmx"; // ✅ EWS endpoint твоего сервера
 
-// Проверяем, авторизован ли пользователь
+// Проверяем, авторизован ли пользователь (только флаг, без пароля)
 function isAuthenticated() {
-  return sessionStorage.getItem('outlookUsername') && sessionStorage.getItem('outlookPassword');
+  return sessionStorage.getItem('outlookAuth') === 'true';
 }
 
 // Инициализация календаря
@@ -58,8 +57,8 @@ function updateWorkersList() {
       <td>${worker.date}</td>
       <td><span class="badge ${statusClass}">${worker.status}</span></td>
       <td>
-        <button class="btn btn-sm btn-outline-primary" onclick="createEventInOutlook(${index})">
-          <i class="fas fa-calendar-plus me-1"></i> Zu Kalender hinzufügen
+        <button class="btn btn-sm btn-outline-primary" onclick="openInOutlook(${index})">
+          <i class="fas fa-calendar-plus me-1"></i> Zu Outlook
         </button>
         <button class="btn btn-sm btn-outline-danger" onclick="deleteWorker(${index})">
           <i class="fas fa-trash me-1"></i> Löschen
@@ -98,72 +97,22 @@ function deleteWorker(index) {
   }
 }
 
-// Создаём событие в Outlook через EWS (прямо, без открытия браузера)
-async function createEventInOutlook(index) {
+// Открываем Outlook Web (Direct Link)
+function openInOutlook(index) {
   if (!isAuthenticated()) {
     showAuthModal();
     return;
   }
 
   const worker = workers[index];
-  const username = sessionStorage.getItem('outlookUsername');
-  const password = sessionStorage.getItem('outlookPassword');
+  const subject = encodeURIComponent(`${worker.name} - ${worker.status}`);
+  const start = `${worker.date}T09:00:00`;
+  const end = `${worker.date}T17:00:00`;
+  const body = encodeURIComponent(`Mitarbeiter: ${worker.name}\nStatus: ${worker.status}`);
 
-  try {
-    // Формируем SOAP-запрос для создания события
-    const soapRequest = `
-      <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-                     xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
-                     xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages">
-        <soap:Header>
-          <t:RequestServerVersion Version="Exchange2013" />
-        </soap:Header>
-        <soap:Body>
-          <m:CreateItem SendMeetingInvitations="SendToNone">
-            <m:Items>
-              <t:CalendarItem>
-                <t:Subject>${worker.name} - ${worker.status}</t:Subject>
-                <t:Body BodyType="Text">${worker.name}: ${worker.status}</t:Body>
-                <t:Start>${worker.date}T09:00:00</t:Start>
-                <t:End>${worker.date}T17:00:00</t:End>
-                <t:CalendarItemType>Single</t:CalendarItemType>
-                <t:RequiredAttendees>
-                  <t:Attendee>
-                    <t:Mailbox>
-                      <t:EmailAddress>${COMMON_CALENDAR_EMAIL}</t:EmailAddress>
-                    </t:Mailbox>
-                  </t:Attendee>
-                </t:RequiredAttendees>
-              </t:CalendarItem>
-            </m:Items>
-          </m:CreateItem>
-        </soap:Body>
-      </soap:Envelope>
-    `;
-
-    // Отправляем запрос к EWS
-    const response = await fetch(EWS_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/xml; charset=utf-8',
-        'Authorization': 'Basic ' + btoa(`${username}:${password}`)
-      },
-      body: soapRequest
-    });
-
-    const xmlResponse = await response.text();
-    console.log('EWS Response:', xmlResponse);
-
-    // Проверяем, успешно ли создалось событие
-    if (response.ok && xmlResponse.includes('CreateItemResponse')) {
-      alert('✅ Ereignis wurde erfolgreich zum Kalender hinzugefügt!');
-    } else {
-      alert('❌ Fehler beim Hinzufügen des Ereignisses. Siehe Konsole für Details.');
-    }
-  } catch (error) {
-    console.error('EWS Error:', error);
-    alert(`❌ Fehler: ${error.message}`);
-  }
+  // Direct Link для твоего Exchange Server
+  const url = `https://mail.wolfenbuettel.de/owa/Museum@Wolfenbuettel.de/?cmd=new&module=calendar&path=/calendar/view/WorkWeek&subject=${subject}&startdt=${start}&enddt=${end}&body=${body}`;
+  window.open(url, '_blank');
 }
 
 // Показываем модальное окно для ввода логина
@@ -172,7 +121,7 @@ function showAuthModal() {
   modal.show();
 }
 
-// Сохраняем учетные данные в sessionStorage
+// Сохраняем флаг авторизации (без пароля)
 function saveAuth() {
   const username = document.getElementById('outlookUsername').value;
   const password = document.getElementById('outlookPassword').value;
@@ -182,18 +131,19 @@ function saveAuth() {
     return;
   }
 
+  // Сохраняем только флаг и логин (пароль не сохраняем)
+  sessionStorage.setItem('outlookAuth', 'true');
   sessionStorage.setItem('outlookUsername', username);
-  sessionStorage.setItem('outlookPassword', password);
 
   const modal = bootstrap.Modal.getInstance(document.getElementById('authModal'));
   modal.hide();
-  alert('✅ Anmeldung erfolgreich! Sie können jetzt Ereignisse erstellen.');
+  alert('✅ Anmeldung erfolgreich! Sie können jetzt arbeiten.');
 }
 
 // Выход из системы
 function logout() {
+  sessionStorage.removeItem('outlookAuth');
   sessionStorage.removeItem('outlookUsername');
-  sessionStorage.removeItem('outlookPassword');
   alert('Sie wurden abgemeldet.');
 }
 
